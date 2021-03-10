@@ -2,10 +2,16 @@ package com.tensquare.base.controller;
 
 import com.tensquare.base.pojo.Label;
 import com.tensquare.base.service.LabelService;
+import entity.PageResult;
 import entity.Result;
 import entity.StatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.w3c.dom.html.HTMLLabelElement;
+
+import java.util.List;
 
 /**
  * @description:
@@ -56,6 +62,18 @@ public class LabelController {
         label.setId(labelId);
         labelService.update(label);
         return new Result(true,StatusCode.OK,"修改成功");
+    }
+
+    @PostMapping("/search")
+    public Result searchLabel(@RequestBody Label label) {
+        List<Label> labels = labelService.searchLabel(label);
+        return new Result(true, StatusCode.OK, "查询成功", labels);
+    }
+
+    @PostMapping("/search/{page}/{size}")
+    public Result queryPage(@RequestBody Label label,@PathVariable("page") int page,@PathVariable("size") int size) {
+        Page<Label> pages  =  labelService.queryPage(label,page,size);
+        return new Result(true, StatusCode.OK, "查询成功", new PageResult<Label>(pages.getTotalElements(),pages.getContent()));
     }
 
 }

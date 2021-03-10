@@ -16,6 +16,18 @@ import java.io.Serializable;
 @Entity
 @Table(name = "tb_label")
 public class Label implements Serializable {
+    @Override
+    public String toString() {
+        return "Label{" +
+                "id='" + id + '\'' +
+                ", labelname='" + labelname + '\'' +
+                ", state='" + state + '\'' +
+                ", count=" + count +
+                ", recommend='" + recommend + '\'' +
+                ", fans=" + fans +
+                '}';
+    }
+
     @Id
     private String id;
     private String labelname;
