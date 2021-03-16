@@ -2,7 +2,10 @@ package com.tensquare.qa.controller;
 import java.util.List;
 import java.util.Map;
 
+import io.jsonwebtoken.Claims;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +15,10 @@ import com.tensquare.qa.service.ProblemService;
 import entity.PageResult;
 import entity.Result;
 import entity.StatusCode;
+import util.JwtUtil;
+
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * 控制器层
  * @author Administrator
@@ -24,6 +31,10 @@ public class ProblemController {
 
 	@Autowired
 	private ProblemService problemService;
+	@Autowired
+	private HttpServletRequest request;
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@GetMapping("/newlist/{labelId}/{page}/{size}")
 	public Result newList(@PathVariable String labelId,@PathVariable int page,@PathVariable int size) {
@@ -94,6 +105,19 @@ public class ProblemController {
 	 */
 	@RequestMapping(method=RequestMethod.POST)
 	public Result add(@RequestBody Problem problem  ){
+		String token = (String) request.getAttribute("user_claims");
+		if (token == null || StringUtils.isBlank(token)) {
+			return new Result(false, StatusCode.ACCESSERROR, "权限不足");
+		}
+		Claims claims = null;
+		try {
+			claims = jwtUtil.parseJWT(token);
+			String userid = claims.getId();
+			problem.setUserid(userid);
+		} catch (Exception e) {
+			return new Result(false, StatusCode.ACCESSERROR, "令牌不正确");
+		}
+
 		problemService.add(problem);
 		return new Result(true,StatusCode.OK,"增加成功");
 	}

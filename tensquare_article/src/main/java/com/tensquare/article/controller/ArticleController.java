@@ -1,7 +1,10 @@
 package com.tensquare.article.controller;
+import java.sql.ClientInfoStatus;
 import java.util.List;
 import java.util.Map;
 
+import io.jsonwebtoken.Claims;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +15,10 @@ import com.tensquare.article.service.ArticleService;
 import entity.PageResult;
 import entity.Result;
 import entity.StatusCode;
+import util.JwtUtil;
+
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * 控制器层
  * @author Administrator
@@ -24,6 +31,12 @@ public class ArticleController {
 
 	@Autowired
 	private ArticleService articleService;
+
+	@Autowired
+	private HttpServletRequest request;
+
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@PutMapping("/examine/{articleId}")
 	public Result examine(@PathVariable String articleId) {
@@ -86,6 +99,20 @@ public class ArticleController {
 	 */
 	@RequestMapping(method=RequestMethod.POST)
 	public Result add(@RequestBody Article article  ){
+		String token = (String) request.getAttribute("user_claims");
+		if (token == null || StringUtils.isBlank(token)) {
+			return new Result(false, StatusCode.ACCESSERROR, "权限不足");
+		}
+		try {
+			Claims claims = jwtUtil.parseJWT(token);
+			if (claims != null) {
+				String userId = claims.getId();
+				article.setUserid(userId);
+			}
+		} catch (Exception e) {
+			return new Result(false, StatusCode.ACCESSERROR, "令牌错误");
+		}
+
 		articleService.add(article);
 		return new Result(true,StatusCode.OK,"增加成功");
 	}

@@ -14,3 +14,7 @@ spring:
   redis:
     host: 192.168.109.130
     port: 6379
+jwt:
+  config:
+    key: tensquare
+    ttl: 3600000

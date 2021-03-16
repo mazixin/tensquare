@@ -5,11 +5,16 @@ import com.tensquare.spit.service.SpitService;
 import entity.PageResult;
 import entity.Result;
 import entity.StatusCode;
+import io.jsonwebtoken.Claims;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import sun.security.provider.ConfigFile;
+import util.JwtUtil;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @description:
@@ -29,6 +34,12 @@ public class SpitController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @GetMapping()
     public Result findAll() {
         return new Result(true, StatusCode.OK, "查询成功", this.spitService.findAll());
@@ -41,6 +52,19 @@ public class SpitController {
 
     @RequestMapping(method = RequestMethod.POST)
     public Result save(@RequestBody Spit spit) {
+        String token = (String) request.getAttribute("user_claims");
+        if (token == null || StringUtils.isBlank(token)) {
+            return new Result(false, StatusCode.ACCESSERROR, "权限不足");
+        }
+        try {
+            Claims claims = jwtUtil.parseJWT(token);
+            if (claims !=  null) {
+                String userId = claims.getId();
+                spit.setUserid(userId);
+            }
+        } catch (Exception e) {
+            return new Result(false, StatusCode.ACCESSERROR, "令牌不正确");
+        }
         this.spitService.save(spit);
         return new Result(true, StatusCode.OK, "添加成功");
     }
